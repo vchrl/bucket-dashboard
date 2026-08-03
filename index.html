@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bucket Protocol: On-chain TVL &amp; Transparency | Dune (layout mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f6f6; --card:#ffffff; --border:#e3e3e3; --text:#1e1e1e; --muted:#7a7a7a;
+    --orange:#f4603e; --green:#2e9e5b; --red:#d64545; --blue:#4c7fe0; --purple:#8b6fc4;
+    --teal:#2fa7a0; --gold:#d9a13b; --chart-grid:#ececec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+  a{color:var(--orange);text-decoration:none}
+
+  /* mock banner */
+  .mockbar{background:#1e1e1e;color:#fff;text-align:center;padding:7px 12px;font-size:12px;letter-spacing:.4px}
+  .mockbar b{color:var(--orange)}
+
+  /* dune top nav */
+  .nav{background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:18px;padding:0 20px;height:52px;position:sticky;top:0;z-index:50}
+  .dune-logo{font-weight:700;font-size:18px;color:var(--orange);letter-spacing:-.5px}
+  .nav .search{flex:0 1 340px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:13px}
+  .nav .links{margin-left:auto;display:flex;gap:16px;font-size:13px;color:var(--muted)}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 16px 80px}
+
+  /* dashboard header */
+  .dash-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:6px}
+  .dash-title{font-size:22px;font-weight:700}
+  .dash-meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted)}
+  .avatar{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#2fa7a0,#4c7fe0);display:inline-block}
+  .btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;color:var(--text);display:inline-flex;gap:6px;align-items:center;cursor:default}
+  .btn.star b{color:var(--gold)}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:14px}
+  .w1{grid-column:span 1}.w2{grid-column:span 2}.w3{grid-column:span 3}
+  .w4{grid-column:span 4}.w6{grid-column:span 6}
+  @media(max-width:900px){.w1,.w2,.w3,.w4{grid-column:span 6}}
+
+  /* widgets */
+  .widget{background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+  .whead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0;font-weight:600;font-size:13.5px}
+  .whead .dots{color:var(--muted);letter-spacing:2px}
+  .wbody{padding:10px 14px 12px;flex:1}
+  .wfoot{border-top:1px solid var(--border);padding:6px 14px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+  .wfoot .q{font-family:'IBM Plex Mono',monospace}
+
+  /* text widgets (markdown-style) */
+  .textw{background:transparent;border:none}
+  .textw .wbody{padding:6px 2px}
+  .textw h2{font-size:19px;font-weight:700;border-bottom:2px solid var(--text);padding-bottom:6px;margin-bottom:4px}
+  .textw h3{font-size:15px;font-weight:600;margin-bottom:4px}
+  .textw p{font-size:13px;color:#444;max-width:900px}
+  .textw code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:#eee;padding:1px 5px;border-radius:4px}
+
+  /* counters */
+  .counter .num{font-size:26px;font-weight:700;letter-spacing:-.5px}
+  .counter .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+  .counter .sub{font-size:11.5px;margin-top:6px}
+  .up{color:var(--green)} .down{color:var(--red)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:6px 8px;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+  td.num,th.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:10px;font-weight:600}
+  .tag.ok{background:#e7f5ec;color:var(--green)} .tag.warn{background:#fdf1e3;color:#c07b1e}
+  .tag.stale{background:#f1f1f1;color:var(--muted)} .tag.flag{background:#fbe9e9;color:var(--red)}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  svg{display:block;width:100%;height:auto}
+  .axis{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:var(--muted)}
+
+  .note{background:#fbf7ef;border:1px solid #eadfc8;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#5c4d2e}
+  .note b{color:#3f3312}
+</style>
+</head>
+<body>
+
+<div class="mockbar"><b>LAYOUT MOCKUP.</b> All figures illustrative. Real dashboard renders from private Dune queries after engagement start.</div>
+
+<nav class="nav">
+  <span class="dune-logo">dune</span>
+  <span class="search">🔍&nbsp; Search for dashboards, queries, or wizards…</span>
+  <span class="links"><span>Discover</span><span>Favorites</span><span>Library</span><span class="avatar"></span></span>
+</nav>
+
+<div class="wrap">
+
+  <div class="dash-head">
+    <div>
+      <div class="dash-title">Bucket Protocol: On-chain TVL &amp; Transparency</div>
+      <div class="dash-meta"><span class="avatar"></span> <b>0x_vcharles</b> · Unchain Data · refreshed daily</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="btn star"><b>★</b> 128</span>
+      <span class="btn">⑂ Fork</span>
+      <span class="btn">⋯</span>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ══════════ HEADER ROW (gmorpho grammar: intro + links) ══════════ -->
+    <div class="widget textw w4">
+      <div class="wbody">
+        <p><b>Every number on this page traces to a Sui contract.</b> This dashboard rebuilds Bucket Protocol's TVL directly from on-chain state (vault objects, farm pools and CDP events) and shows the derivation, not just the total. Where a price is unavailable on-chain, the asset is flagged <code>unpriced</code> rather than estimated. Methodology notes precede each section.</p>
+      </div>
+    </div>
+    <div class="widget w2">
+      <div class="whead">Links</div>
+      <div class="wbody" style="font-size:12.5px;line-height:1.9">
+        🌐 <a>bucketprotocol.io</a><br>
+        📖 <a>Methodology &amp; definitions</a><br>
+        🛠 <a>Unchain Data, unchaindata.xyz</a>
+      </div>
+    </div>
+
+    <!-- ══════════ KPI COUNTERS ══════════ -->
+    <div class="widget counter w2">
+      <div class="wbody">
+        <div class="num">$41.2M</div>
+        <div class="lbl">Total TVL (net of PSM virtual liquidity)</div>
+        <div class="sub"><span class="up">▲ 2.1%</span> <span style="color:var(--muted)">7d</span></div>
+      </div>
+      <div class="wfoot"><span class="q">bucket_tvl_headline</span><span>2h ago</span></div>
+    </div>
+    <div class="widget counter w1">
+      <div class="wbody">
+        <div class="num">$18.6M</div>
+        <div class="lbl">V2 (USDB)</div>
+        <div class="sub"><span class="up">▲ 3.4%</span></div>
+      </div>
+      <div class="wfoot"><span class="q">v2_tvl</span><span>2h</span></div>
+    </div>
+    <div class="widget counter w1">
+      <div class="wbody">
+        <div class="num">$23.1M</div>
+        <div class="lbl">Farm</div>
+        <div class="sub"><span class="down">▼ 0.8%</span></div>
+      </div>
+      <div class="wfoot"><span class="q">farm_tvl</span><span>2h</span></div>
+    </div>
+    <div class="widget counter w1">
+      <div class="wbody">
+        <div class="num">$1.7M</div>
+        <div class="lbl">V1 (BUCK)</div>
+        <div class="sub"><span class="down">▼ 1.9%</span></div>
+      </div>
+      <div class="wfoot"><span class="q">v1_tvl</span><span>2h</span></div>
+    </div>
+    <div class="widget counter w1">
+      <div class="wbody">
+        <div class="num">−$2.2M</div>
+        <div class="lbl">PSM netting (BUCK)</div>
+        <div class="sub" style="color:var(--muted)">virtual liquidity</div>
+      </div>
+      <div class="wfoot"><span class="q">psm_netting</span><span>2h</span></div>
+    </div>
+
+    <!-- ══════════ 1. OVERVIEW ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>1. Overview</h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>What counts as TVL</h3>
+      <p><b>Total TVL = V2 collateral + Farm deposits + V1 collateral − BUCK held in V2's PSM.</b> Farm deposits are gross (idle pool balances plus positions deployed into Navi and Scallop strategies), per the protocol's definition. PSM BUCK is virtual liquidity provisioned for DEX routing and is netted to avoid counting V1-minted BUCK on both sides. Collateral valued at Bucket's own on-chain oracle where it publishes, DEX VWAP otherwise; thin assets shown at token count and flagged.</p>
+    </div></div>
+
+    <!-- main series 4col + companions 2col -->
+    <div class="widget w4">
+      <div class="whead">TVL by component, 90 days <span class="dots">⋯</span></div>
+      <div class="wbody">
+        <svg viewBox="0 0 640 240">
+          <g stroke="var(--chart-grid)"><line x1="40" y1="30" x2="620" y2="30"/><line x1="40" y1="80" x2="620" y2="80"/><line x1="40" y1="130" x2="620" y2="130"/><line x1="40" y1="180" x2="620" y2="180"/></g>
+          <text class="axis" x="6" y="34">$48M</text><text class="axis" x="6" y="84">$36M</text><text class="axis" x="6" y="134">$24M</text><text class="axis" x="6" y="184">$12M</text>
+          <!-- v1 base -->
+          <path d="M40,210 L620,210 L620,196 L500,197 L360,199 L200,201 L40,203 Z" fill="var(--purple)" opacity=".85"/>
+          <!-- farm -->
+          <path d="M40,203 L200,201 L360,199 L500,197 L620,196 L620,105 L520,103 L400,107 L280,112 L160,116 L40,118 Z" fill="var(--teal)" opacity=".85"/>
+          <!-- v2 -->
+          <path d="M40,118 L160,116 L280,112 L400,107 L520,103 L620,105 L620,42 L540,40 L420,48 L300,58 L180,66 L40,72 Z" fill="var(--blue)" opacity=".85"/>
+          <!-- psm net line -->
+          <path d="M40,66 L180,60 L300,52 L420,42 L540,34 L620,36" fill="none" stroke="var(--orange)" stroke-width="2" stroke-dasharray="5 4"/>
+          <text class="axis" x="40" y="232">May 5</text><text class="axis" x="300" y="232">Jun 18</text><text class="axis" x="575" y="232">Aug 3</text>
+        </svg>
+        <div class="legend">
+          <span><i style="background:var(--blue)"></i>V2 collateral</span>
+          <span><i style="background:var(--teal)"></i>Farm</span>
+          <span><i style="background:var(--purple)"></i>V1</span>
+          <span><i style="background:var(--orange)"></i>Net total (– PSM)</span>
+        </div>
+      </div>
+      <div class="wfoot"><span class="q">bucket_tvl_daily_90d</span><span>2h ago</span></div>
+    </div>
+
+    <div class="w2" style="display:flex;flex-direction:column;gap:12px">
+      <div class="widget" style="flex:1">
+        <div class="whead">Composition today</div>
+        <div class="wbody">
+          <svg viewBox="0 0 200 120">
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--teal)" stroke-width="20" stroke-dasharray="147 276" transform="rotate(-90 60 60)"/>
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--blue)" stroke-width="20" stroke-dasharray="118 276" stroke-dashoffset="-147" transform="rotate(-90 60 60)"/>
+            <circle cx="60" cy="60" r="44" fill="none" stroke="var(--purple)" stroke-width="20" stroke-dasharray="11 276" stroke-dashoffset="-265" transform="rotate(-90 60 60)"/>
+            <text x="60" y="64" text-anchor="middle" font-size="13" font-weight="700">$41.2M</text>
+            <text class="axis" x="120" y="40">Farm 53%</text>
+            <text class="axis" x="120" y="60">V2 43%</text>
+            <text class="axis" x="120" y="80">V1 4%</text>
+          </svg>
+        </div>
+        <div class="wfoot"><span class="q">tvl_composition</span><span>2h</span></div>
+      </div>
+      <div class="widget" style="flex:1">
+        <div class="whead">Week over week</div>
+        <div class="wbody">
+          <table>
+            <tr><th>Component</th><th class="num">WoW</th></tr>
+            <tr><td>V2</td><td class="num up">+3.4%</td></tr>
+            <tr><td>Farm</td><td class="num down">−0.8%</td></tr>
+            <tr><td>V1</td><td class="num down">−1.9%</td></tr>
+            <tr><td><b>Net total</b></td><td class="num up"><b>+2.1%</b></td></tr>
+          </table>
+        </div>
+        <div class="wfoot"><span class="q">tvl_wow</span><span>2h</span></div>
+      </div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Collateral in vs USDB out, 90 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 190">
+          <g stroke="var(--chart-grid)"><line x1="36" y1="30" x2="450" y2="30"/><line x1="36" y1="80" x2="450" y2="80"/><line x1="36" y1="130" x2="450" y2="130"/></g>
+          <text class="axis" x="4" y="34">$20M</text><text class="axis" x="4" y="84">$12M</text><text class="axis" x="4" y="134">$4M</text>
+          <path d="M36,74 L150,68 L260,60 L370,50 L450,46" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+          <path d="M36,118 L150,116 L260,112 L370,110 L450,108" fill="none" stroke="var(--gold)" stroke-width="2.5"/>
+          <text class="axis" x="36" y="182">May 5</text><text class="axis" x="410" y="182">Aug 3</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--blue)"></i>V2 collateral (assets)</span><span><i style="background:var(--gold)"></i>USDB borrowed (liabilities)</span></div>
+      </div>
+      <div class="wfoot"><span class="q">collateral_vs_debt</span><span>2h ago</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Overcollateralisation ratio, 90 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 190">
+          <g stroke="var(--chart-grid)"><line x1="36" y1="40" x2="450" y2="40"/><line x1="36" y1="95" x2="450" y2="95"/><line x1="36" y1="150" x2="450" y2="150"/></g>
+          <text class="axis" x="4" y="44">280%</text><text class="axis" x="4" y="99">240%</text><text class="axis" x="4" y="154">200%</text>
+          <path d="M36,96 L120,92 L220,84 L320,76 L450,70" fill="none" stroke="var(--green)" stroke-width="2.5"/>
+          <text class="axis" x="36" y="182">May 5</text><text class="axis" x="410" y="182">Aug 3</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--green)"></i>Collateral ÷ USDB supply</span></div>
+      </div>
+      <div class="wfoot"><span class="q">overcollateral_ratio</span><span>2h ago</span></div>
+    </div>
+
+    <!-- ══════════ 2. V2 VAULTS ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>2. Bucket V2: collateral vaults</h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>How a vault is measured</h3>
+      <p>Each vault's TVL is its on-chain <code>total_coll_amount</code>, split into <b>idle</b> (held in the vault) and <b>deployed</b> (routed into farm strategies, tracked in the vault's own ledger). The identity <code>idle + deployed − total = 0</code> is verified on every refresh for all vaults. A failed check surfaces in section 6 instead of silently shipping a wrong number.</p>
+    </div></div>
+
+    <div class="widget w4">
+      <div class="whead">V2 TVL by vault, 90 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 640 230">
+          <g stroke="var(--chart-grid)"><line x1="40" y1="30" x2="620" y2="30"/><line x1="40" y1="90" x2="620" y2="90"/><line x1="40" y1="150" x2="620" y2="150"/></g>
+          <text class="axis" x="6" y="34">$20M</text><text class="axis" x="6" y="94">$12M</text><text class="axis" x="6" y="154">$4M</text>
+          <path d="M40,210 L620,210 L620,178 L400,182 L40,188 Z" fill="var(--purple)" opacity=".8"/>
+          <path d="M40,188 L400,182 L620,178 L620,142 L400,150 L40,158 Z" fill="var(--gold)" opacity=".8"/>
+          <path d="M40,158 L400,150 L620,142 L620,96 L400,110 L40,120 Z" fill="var(--teal)" opacity=".8"/>
+          <path d="M40,120 L400,110 L620,96 L620,52 L400,66 L40,80 Z" fill="var(--blue)" opacity=".8"/>
+          <text class="axis" x="40" y="226">May 5</text><text class="axis" x="575" y="226">Aug 3</text>
+        </svg>
+        <div class="legend">
+          <span><i style="background:var(--blue)"></i>haSUI</span><span><i style="background:var(--teal)"></i>SUI</span>
+          <span><i style="background:var(--gold)"></i>vSUI</span><span><i style="background:var(--purple)"></i>other (15)</span>
+        </div>
+      </div>
+      <div class="wfoot"><span class="q">v2_vaults_daily</span><span>2h ago</span></div>
+    </div>
+
+    <div class="widget w2">
+      <div class="whead">Idle vs deployed</div>
+      <div class="wbody">
+        <svg viewBox="0 0 220 180">
+          <rect x="30" y="20" width="60" height="130" fill="var(--blue)" opacity=".25"/>
+          <rect x="30" y="96" width="60" height="54" fill="var(--blue)"/>
+          <rect x="130" y="20" width="60" height="130" fill="var(--teal)" opacity=".25"/>
+          <rect x="130" y="28" width="60" height="122" fill="var(--teal)"/>
+          <text class="axis" x="38" y="166">LST vaults</text><text class="axis" x="132" y="166">other vaults</text>
+          <text class="axis" x="30" y="14">deployed 96%</text><text class="axis" x="130" y="14">idle 98%</text>
+        </svg>
+        <div class="legend" style="margin-top:2px"><span><i style="background:#bbb"></i>total</span><span><i style="background:var(--blue)"></i>filled = dominant state</span></div>
+      </div>
+      <div class="wfoot"><span class="q">v2_idle_deployed</span><span>2h</span></div>
+    </div>
+
+    <div class="widget w6">
+      <div class="whead">Vault detail</div>
+      <div class="wbody" style="overflow-x:auto">
+        <table>
+          <tr><th>Vault</th><th class="num">Collateral</th><th class="num">Idle</th><th class="num">Deployed</th><th class="num">USD value</th><th class="num">Share</th><th>Price source</th><th>Check</th></tr>
+          <tr><td>haSUI</td><td class="num">3.4M</td><td class="num">0.1M</td><td class="num">3.3M</td><td class="num">$6.8M</td><td class="num">37%</td><td><span class="tag warn">oracle</span></td><td><span class="tag ok">✓ 0</span></td></tr>
+          <tr><td>SUI</td><td class="num">2.1M</td><td class="num">2.1M</td><td class="num">,</td><td class="num">$4.2M</td><td class="num">23%</td><td><span class="tag ok">DEX vwap</span></td><td><span class="tag ok">✓ 0</span></td></tr>
+          <tr><td>vSUI (CERT)</td><td class="num">1.5M</td><td class="num">0.1M</td><td class="num">1.4M</td><td class="num">$2.9M</td><td class="num">16%</td><td><span class="tag warn">oracle</span></td><td><span class="tag ok">✓ 0</span></td></tr>
+          <tr><td>sUSDC</td><td class="num">1.6M</td><td class="num">1.6M</td><td class="num">,</td><td class="num">$1.7M</td><td class="num">9%</td><td><span class="tag warn">sCoin rate</span></td><td><span class="tag ok">✓ 0</span></td></tr>
+          <tr><td>afSUI</td><td class="num">0.6M</td><td class="num">0.6M</td><td class="num">,</td><td class="num">$1.2M</td><td class="num">7%</td><td><span class="tag ok">DEX vwap</span></td><td><span class="tag ok">✓ 0</span></td></tr>
+          <tr><td>TLP</td><td class="num">0.2M</td><td class="num">0.2M</td><td class="num">,</td><td class="num">$0.3M</td><td class="num">2%</td><td><span class="tag flag">unpriced</span></td><td><span class="tag stale">carried 94d</span></td></tr>
+          <tr><td colspan="8" style="color:var(--muted);font-size:11.5px">… 12 more vaults</td></tr>
+        </table>
+      </div>
+      <div class="wfoot"><span class="q">v2_vault_detail</span><span>2h ago</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Vault utilisation vs debt cap</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 170">
+          <g font-size="10">
+            <rect x="90" y="18" width="330" height="14" rx="3" fill="var(--chart-grid)"/><rect x="90" y="18" width="240" height="14" rx="3" fill="var(--blue)"/><text class="axis" x="10" y="29">haSUI</text><text class="axis" x="426" y="29">73%</text>
+            <rect x="90" y="46" width="330" height="14" rx="3" fill="var(--chart-grid)"/><rect x="90" y="46" width="290" height="14" rx="3" fill="var(--gold)"/><text class="axis" x="10" y="57">SUI</text><text class="axis" x="426" y="57">88%</text>
+            <rect x="90" y="74" width="330" height="14" rx="3" fill="var(--chart-grid)"/><rect x="90" y="74" width="120" height="14" rx="3" fill="var(--blue)"/><text class="axis" x="10" y="85">vSUI</text><text class="axis" x="426" y="85">36%</text>
+            <rect x="90" y="102" width="330" height="14" rx="3" fill="var(--chart-grid)"/><rect x="90" y="102" width="315" height="14" rx="3" fill="var(--red)"/><text class="axis" x="10" y="113">sUSDC</text><text class="axis" x="426" y="113">95%</text>
+            <rect x="90" y="130" width="330" height="14" rx="3" fill="var(--chart-grid)"/><rect x="90" y="130" width="60" height="14" rx="3" fill="var(--blue)"/><text class="axis" x="10" y="141">afSUI</text><text class="axis" x="426" y="141">18%</text>
+          </g>
+        </svg>
+      </div>
+      <div class="wfoot"><span class="q">vault_utilisation</span><span>2h ago</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Collateral deployed by destination</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 170">
+          <g font-size="10">
+            <rect x="110" y="26" width="300" height="18" rx="3" fill="var(--chart-grid)"/><rect x="110" y="26" width="205" height="18" rx="3" fill="var(--blue)"/><text class="axis" x="10" y="39">Navi farm</text><text class="axis" x="418" y="39">68%</text>
+            <rect x="110" y="60" width="300" height="18" rx="3" fill="var(--chart-grid)"/><rect x="110" y="60" width="95" height="18" rx="3" fill="var(--teal)"/><text class="axis" x="10" y="73">Delegation</text><text class="axis" x="418" y="73">32%</text>
+            <rect x="110" y="110" width="300" height="18" rx="3" fill="var(--chart-grid)"/><rect x="110" y="110" width="12" height="18" rx="3" fill="var(--gold)"/><text class="axis" x="10" y="123">Idle in vault</text><text class="axis" x="418" y="123">4%</text>
+          </g>
+          <text class="axis" x="110" y="150">Share of LST vault collateral routed out</text>
+        </svg>
+      </div>
+      <div class="wfoot"><span class="q">v2_deployment_split</span><span>2h ago</span></div>
+    </div>
+
+    <!-- ══════════ 3. FARM ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>3. Bucket Farm: deposit pools</h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>How the Farm is measured</h3>
+      <p>Farm TVL is <b>gross deposits</b> per the protocol's definition: each pool's idle balance plus positions deployed into external strategies (Navi, Scallop), read from the pool's own ledger. Deployed positions carry borrowing on the destination protocols that this gross figure does not net; the split is shown per pool. Pools with no on-chain write in a period carry their last verified state forward, with age shown. Never silently dropped, never silently zeroed.</p>
+    </div></div>
+
+    <div class="widget w4">
+      <div class="whead">Farm TVL, 90 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 640 220">
+          <g stroke="var(--chart-grid)"><line x1="40" y1="30" x2="620" y2="30"/><line x1="40" y1="90" x2="620" y2="90"/><line x1="40" y1="150" x2="620" y2="150"/></g>
+          <text class="axis" x="6" y="34">$26M</text><text class="axis" x="6" y="94">$20M</text><text class="axis" x="6" y="154">$14M</text>
+          <path d="M40,60 L160,62 L280,66 L400,64 L520,70 L620,72 L620,200 L40,200 Z" fill="var(--teal)" opacity=".22"/>
+          <path d="M40,60 L160,62 L280,66 L400,64 L520,70 L620,72" fill="none" stroke="var(--teal)" stroke-width="2.5"/>
+          <text class="axis" x="40" y="216">May 5</text><text class="axis" x="575" y="216">Aug 3</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--teal)"></i>Gross deposits (idle + deployed), priced daily</span></div>
+      </div>
+      <div class="wfoot"><span class="q">farm_tvl_daily</span><span>2h ago</span></div>
+    </div>
+
+    <div class="w2" style="display:flex;flex-direction:column;gap:12px">
+      <div class="widget" style="flex:1">
+        <div class="whead">Idle vs deployed</div>
+        <div class="wbody">
+          <svg viewBox="0 0 200 110">
+            <rect x="20" y="46" width="160" height="20" rx="4" fill="var(--chart-grid)"/>
+            <rect x="20" y="46" width="156" height="20" rx="4" fill="var(--teal)"/>
+            <text class="axis" x="20" y="38">deployed to strategies ≈ 98%</text>
+            <text class="axis" x="20" y="86">idle in pools ≈ 2%</text>
+          </svg>
+        </div>
+        <div class="wfoot"><span class="q">farm_split</span><span>2h</span></div>
+      </div>
+      <div class="widget" style="flex:1">
+        <div class="whead">Net flow, 90 days</div>
+        <div class="wbody">
+          <div style="font-size:22px;font-weight:700" class="down">−$0.9M</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">10 stakes · 50 unstakes<br>Farm is in wind-down; TVL movement is price-driven.</div>
+        </div>
+        <div class="wfoot"><span class="q">farm_netflow</span><span>2h</span></div>
+      </div>
+    </div>
+
+    <div class="widget w6">
+      <div class="whead">Pool detail (31 pools)</div>
+      <div class="wbody" style="overflow-x:auto">
+        <table>
+          <tr><th>Pool</th><th class="num">Idle</th><th class="num">Deployed</th><th>Strategy</th><th class="num">USD value</th><th>State age</th><th>Price source</th></tr>
+          <tr><td>haSUI</td><td class="num">120</td><td class="num">3.0M</td><td>Navi</td><td class="num">$6.1M</td><td><span class="tag ok">1d</span></td><td><span class="tag warn">oracle</span></td></tr>
+          <tr><td>SUI</td><td class="num">273</td><td class="num">1.37M</td><td>Navi ×2</td><td class="num">$2.7M</td><td><span class="tag ok">1d</span></td><td><span class="tag ok">DEX vwap</span></td></tr>
+          <tr><td>afSUI</td><td class="num">0</td><td class="num">1.78M</td><td>Scallop</td><td class="num">$3.6M</td><td><span class="tag ok">2d</span></td><td><span class="tag ok">DEX vwap</span></td></tr>
+          <tr><td>vSUI (CERT)</td><td class="num">85</td><td class="num">1.88M</td><td>Scallop</td><td class="num">$3.7M</td><td><span class="tag ok">3d</span></td><td><span class="tag warn">oracle</span></td></tr>
+          <tr><td>USDC</td><td class="num">350</td><td class="num">15.9K</td><td>Navi</td><td class="num">$16.3K</td><td><span class="tag ok">1d</span></td><td><span class="tag ok">stable</span></td></tr>
+          <tr><td>AF_LP (×2)</td><td class="num">,</td><td class="num">2.4M units</td><td>,</td><td class="num">token count</td><td><span class="tag stale">8mo</span></td><td><span class="tag flag">unpriced LP</span></td></tr>
+          <tr><td>BTC</td><td class="num">5.6</td><td class="num">,</td><td>,</td><td class="num">$0.6M</td><td><span class="tag stale">11mo</span></td><td><span class="tag ok">Pyth</span></td></tr>
+          <tr><td colspan="7" style="color:var(--muted);font-size:11.5px">… 24 more pools, sorted by USD value. Long-tail assets shown at token count with <span class="tag flag">unpriced</span> flag.</td></tr>
+        </table>
+      </div>
+      <div class="wfoot"><span class="q">farm_pool_detail</span><span>2h ago</span></div>
+    </div>
+
+    <!-- ══════════ 4. V1 ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>4. Bucket V1: legacy CDP</h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>How V1 is measured</h3>
+      <p>V1 is winding down but not frozen: positions still close every month. Its series is rebuilt from position-level events (each carrying full collateral and debt state), so it reflects real closures rather than a carried-forward snapshot. The staking fountain is <b>excluded by construction</b>. It registers debt, not collateral, and its collateral never leaves the core protocol.</p>
+    </div></div>
+
+    <div class="widget w3">
+      <div class="whead">V1 TVL, 180 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 180">
+          <g stroke="var(--chart-grid)"><line x1="36" y1="30" x2="450" y2="30"/><line x1="36" y1="85" x2="450" y2="85"/><line x1="36" y1="140" x2="450" y2="140"/></g>
+          <text class="axis" x="4" y="34">$4M</text><text class="axis" x="4" y="89">$2.5M</text><text class="axis" x="4" y="144">$1M</text>
+          <path d="M36,52 L120,60 L200,72 L280,88 L360,102 L450,116" fill="none" stroke="var(--purple)" stroke-width="2.5"/>
+          <text class="axis" x="36" y="172">Feb</text><text class="axis" x="420" y="172">Aug</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--purple)"></i>V1 collateral, all bucket types</span></div>
+      </div>
+      <div class="wfoot"><span class="q">v1_tvl_series</span><span>daily</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">V1 position closures, monthly</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 180">
+          <rect x="60" y="60" width="40" height="90" fill="var(--purple)" opacity=".8"/>
+          <rect x="130" y="80" width="40" height="70" fill="var(--purple)" opacity=".8"/>
+          <rect x="200" y="70" width="40" height="80" fill="var(--purple)" opacity=".8"/>
+          <rect x="270" y="95" width="40" height="55" fill="var(--purple)" opacity=".8"/>
+          <rect x="340" y="105" width="40" height="45" fill="var(--purple)" opacity=".8"/>
+          <text class="axis" x="64" y="166">Apr</text><text class="axis" x="134" y="166">May</text><text class="axis" x="204" y="166">Jun</text><text class="axis" x="274" y="166">Jul</text><text class="axis" x="344" y="166">Aug</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--purple)"></i>Bottles destroyed + BUCK burnt</span></div>
+      </div>
+      <div class="wfoot"><span class="q">v1_closures</span><span>daily</span></div>
+    </div>
+
+    <!-- ══════════ 5. USDB ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>5. USDB: supply &amp; backing <span style="font-size:12px;color:var(--muted);font-weight:400">(Scope 2)</span></h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>Where USDB comes from</h3>
+      <p>USDB enters supply through multiple doors: user borrowing against collateral, PSM swaps, and protocol-side mints. This section decomposes outstanding supply by mint origin so the borrowed share is visible next to the total. Supply is a liability, not TVL, and the two are never conflated on this page.</p>
+    </div></div>
+
+    <div class="widget w3">
+      <div class="whead">USDB supply by origin</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 60">
+          <rect x="10" y="18" width="290" height="24" fill="var(--muted)" opacity=".45"/>
+          <rect x="300" y="18" width="80" height="24" fill="var(--gold)"/>
+          <rect x="380" y="18" width="46" height="24" fill="var(--blue)"/>
+          <rect x="426" y="18" width="24" height="24" fill="var(--teal)"/>
+        </svg>
+        <div class="legend">
+          <span><i style="background:var(--muted);opacity:.45"></i>Protocol / treasury mints</span>
+          <span><i style="background:var(--gold)"></i>PSM</span>
+          <span><i style="background:var(--blue)"></i>CDP-borrowed</span>
+          <span><i style="background:var(--teal)"></i>Savings-origin</span>
+        </div>
+      </div>
+      <div class="wfoot"><span class="q">usdb_supply_origin</span><span>daily</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Peg: BUCK &amp; USDB vs $1, 90 days</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 150">
+          <line x1="36" y1="75" x2="450" y2="75" stroke="#bbb" stroke-dasharray="4 4"/>
+          <text class="axis" x="6" y="79">$1.00</text>
+          <path d="M36,72 L120,76 L200,73 L280,77 L360,74 L450,76" fill="none" stroke="var(--orange)" stroke-width="2"/>
+          <path d="M36,77 L120,74 L200,78 L280,74 L360,77 L450,75" fill="none" stroke="var(--blue)" stroke-width="2"/>
+        </svg>
+        <div class="legend"><span><i style="background:var(--orange)"></i>BUCK (protocol oracle)</span><span><i style="background:var(--blue)"></i>USDB</span></div>
+      </div>
+      <div class="wfoot"><span class="q">peg_monitor</span><span>hourly</span></div>
+    </div>
+
+    <!-- ══════════ 6. INTEGRITY ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>6. Data integrity: live checks</h2>
+    </div></div>
+
+    <div class="widget textw w6"><div class="wbody">
+      <h3>Why this section exists</h3>
+      <p>A dashboard asserting a number without showing its derivation is exactly as unfalsifiable as the number it replaces. Every refresh re-runs these checks against on-chain state. A failing check renders here in red before any headline updates. The failure mode is loud, never a silently wrong total.</p>
+    </div></div>
+
+    <div class="widget w6">
+      <div class="whead">Reconciliation checks, last refresh</div>
+      <div class="wbody" style="overflow-x:auto">
+        <table>
+          <tr><th>Check</th><th>Rule</th><th class="num">Result</th><th>Status</th></tr>
+          <tr><td>V2 vault ledgers</td><td>idle + deployed − total_coll_amount = 0, every vault</td><td class="num">0 across 18/18</td><td><span class="tag ok">PASS</span></td></tr>
+          <tr><td>Farm flow conservation</td><td>Σ(stakes − unstakes) = current pool balance, per pool</td><td class="num">31/31 within tolerance</td><td><span class="tag ok">PASS</span></td></tr>
+          <tr><td>PSM mint parity</td><td>PSM swap-in volume = PSM-origin USDB mints</td><td class="num">Δ 0.00%</td><td><span class="tag ok">PASS</span></tr>
+          <tr><td>State freshness</td><td>No priced component older than 7 days</td><td class="num">2 assets carried &gt; 7d</td><td><span class="tag warn">FLAGGED</span></td></tr>
+          <tr><td>Price coverage</td><td>Every USD figure has a declared source</td><td class="num">3 assets unpriced (shown as counts)</td><td><span class="tag warn">FLAGGED</span></td></tr>
+        </table>
+      </div>
+      <div class="wfoot"><span class="q">integrity_checks</span><span>2h ago</span></div>
+    </div>
+
+    <!-- ══════════ 7. ANALYTICS (scope 3) ══════════ -->
+    <div class="widget textw w6"><div class="wbody">
+      <h2>7. Analytics &amp; monitoring <span style="font-size:12px;color:var(--muted);font-weight:400">(Scope 3)</span></h2>
+    </div></div>
+
+    <div class="widget w3">
+      <div class="whead">Active wallets, weekly</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 170">
+          <g stroke="var(--chart-grid)"><line x1="36" y1="40" x2="450" y2="40"/><line x1="36" y1="90" x2="450" y2="90"/><line x1="36" y1="140" x2="450" y2="140"/></g>
+          <text class="axis" x="4" y="44">600</text><text class="axis" x="4" y="94">300</text><text class="axis" x="4" y="144">0</text>
+          <path d="M36,68 L100,72 L160,66 L220,78 L280,82 L340,76 L400,84 L450,88" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+          <path d="M36,110 L100,114 L160,108 L220,118 L280,122 L340,120 L400,126 L450,128" fill="none" stroke="var(--teal)" stroke-width="2" stroke-dasharray="5 4"/>
+          <text class="axis" x="36" y="164">May</text><text class="axis" x="420" y="164">Aug</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Total (V1 + V2 + Farm)</span><span><i style="background:var(--teal)"></i>New wallets</span></div>
+      </div>
+      <div class="wfoot"><span class="q">active_wallets_weekly</span><span>daily</span></div>
+    </div>
+
+    <div class="widget w3">
+      <div class="whead">Revenue &amp; position closures, monthly</div>
+      <div class="wbody">
+        <svg viewBox="0 0 460 170">
+          <rect x="60" y="80" width="25" height="70" fill="var(--gold)" opacity=".8"/>
+          <rect x="88" y="110" width="25" height="40" fill="var(--red)" opacity=".6"/>
+          <rect x="150" y="70" width="25" height="80" fill="var(--gold)" opacity=".8"/>
+          <rect x="178" y="100" width="25" height="50" fill="var(--red)" opacity=".6"/>
+          <rect x="240" y="90" width="25" height="60" fill="var(--gold)" opacity=".8"/>
+          <rect x="268" y="120" width="25" height="30" fill="var(--red)" opacity=".6"/>
+          <rect x="330" y="85" width="25" height="65" fill="var(--gold)" opacity=".8"/>
+          <rect x="358" y="130" width="25" height="20" fill="var(--red)" opacity=".6"/>
+          <text class="axis" x="64" y="164">May</text><text class="axis" x="154" y="164">Jun</text><text class="axis" x="244" y="164">Jul</text><text class="axis" x="334" y="164">Aug</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--gold)"></i>Fee revenue (CollectFee)</span><span><i style="background:var(--red);opacity:.6"></i>Liquidations + closures</span></div>
+      </div>
+      <div class="wfoot"><span class="q">revenue_closures</span><span>daily</span></div>
+    </div>
+
+    <!-- footer note -->
+    <div class="w6 note">
+      <b>About this mockup.</b> Layout and section structure only. Every figure, percentage and chart shape on this page is illustrative. The production dashboard renders these panels from verified queries against <code>sui.events</code> and <code>sui.objects</code>, with the integrity checks in section 6 running on every refresh. Built by <b>Vincent Charles</b> from Unchain Data.
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
